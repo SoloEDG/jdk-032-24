@@ -1,0 +1,5 @@
+export { useCompare } from './model/useCompare'
+export type { LaneSide, LaneView, LaneRow, CompareSummary, CommonPair } from './model/useCompare'
+export { default as ComparePanel } from './ui/ComparePanel.vue'
+export { alignRuns, contactRecords, contactLabel, edgeLabels, edgePhrase } from './lib/contacts'
+export type { ContactRecord, MatchedContact, RunAlignment } from './lib/contacts'

@@ -6,10 +6,11 @@ import { MechanismPanel } from '@/features/mechanisms'
 import { ScenePanel } from '@/features/scene'
 import { SimulationBar } from '@/features/simulation'
 import { ReplayPanel } from '@/features/replay'
+import { ComparePanel } from '@/features/compare'
 import { useWorkspace } from './useWorkspace'
 
 const {
-  document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review, place, move, focusEvent,
+  document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review, compare, place, move, focusEvent,
 } = useWorkspace()
 const saveLabel = computed(() => saveState.value === 'saved' ? '已保存' : saveState.value === 'saving' ? '保存中' : '尚未保存')
 </script>
@@ -48,6 +49,12 @@ const saveLabel = computed(() => saveState.value === 'saved' ? '已保存' : sav
           @move="move" />
         <SimulationBar :run="simulation.run.value" :stale="simulation.stale.value" :busy="simulation.busy.value"
           :issue="simulation.issue.value" @run="simulation.simulate" @reset="simulation.clear" />
+        <ComparePanel :runs="compare.runs.value" :a-id="compare.aId.value" :b-id="compare.bId.value"
+          :lane-a="compare.laneAView.value" :lane-b="compare.laneBView.value" :summary="compare.summary.value"
+          :pairs="compare.commonPairs.value" :selected-match-id="compare.selectedMatchId.value"
+          @select-a="compare.chooseRun('a', $event)" @select-b="compare.chooseRun('b', $event)"
+          @lane-toggle="compare.toggleLane" @lane-seek="compare.seekLane" @lane-restart="compare.restartLane"
+          @lane-event="compare.selectLaneEvent" @select-match="compare.selectMatch" @remove-run="compare.removeRun" />
         <div class="center-footer">
           <span><Cloud :size="13" /> 本机自动保存</span><span class="footer-divider">/</span>
           <span>摆放 {{ document.pieces.length }} 件 · 连线 {{ document.connections.length }} 条</span>

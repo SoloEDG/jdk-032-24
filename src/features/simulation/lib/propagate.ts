@@ -1,15 +1,31 @@
-import type { DominoDocument, Piece, SimulationEvent } from '@/shared/document'
-import { nextContact } from '@/features/layout'
+import type { ContactEdge, ContactInfo, DominoDocument, Piece, SimulationEvent } from '@/shared/document'
+import { angleBetween, forwardVector, nextContact } from '@/features/layout/lib/geometry'
 
 interface Scheduled {
   pieceId: string
   time: number
   causeId: string | null
   detail: string
+  contact: ContactInfo
+}
+
+function physicalEdge(source: Piece, target: Piece): ContactEdge {
+  if (source.kind === 'ramp') return 'ramp'
+  if (source.kind === 'splitter') return 'split'
+  const facing = forwardVector(source)
+  const delta = { x: target.x - source.x, y: target.y - source.y }
+  const angle = angleBetween(facing, delta)
+  if (angle <= 45) return 'front'
+  if (angle >= 135) return 'back'
+  const cross = facing.x * delta.y - facing.y * delta.x
+  return cross >= 0 ? 'right' : 'left'
 }
 
 export function propagate(document: DominoDocument) {
-  const queue: Scheduled[] = [{ pieceId: document.startPieceId, time: 0, causeId: null, detail: '手动触发' }]
+  const queue: Scheduled[] = [{
+    pieceId: document.startPieceId, time: 0, causeId: null, detail: '手动触发',
+    contact: { sourceId: null, edge: 'start' },
+  }]
   const fallen = new Set<string>()
   const events: SimulationEvent[] = []
   let interruptedPieceId: string | null = null
@@ -26,11 +42,15 @@ export function propagate(document: DominoDocument) {
       const event: SimulationEvent = {
         id: `event-${events.length + 1}`, pieceId: piece.id, time: next.time,
         causeId: next.causeId, kind: 'mechanism', detail: `触发器响应 · ${next.detail}`,
+        contact: next.contact,
       }
       events.push(event)
       reachedTrigger = true
       for (const link of document.connections.filter(link => link.from === piece.id && link.enabled)) {
-        queue.push({ pieceId: link.to, time: next.time + link.delay, causeId: event.id, detail: '机关连线' })
+        queue.push({
+          pieceId: link.to, time: next.time + link.delay, causeId: event.id, detail: '机关连线',
+          contact: { sourceId: piece.id, edge: 'link' },
+        })
       }
       continue
     }
@@ -41,11 +61,15 @@ export function propagate(document: DominoDocument) {
       causeId: next.causeId, kind: piece.kind === 'splitter' ? 'mechanism' : 'fall',
       detail: piece.kind === 'splitter' ? `分岔展开 · ${next.detail}`
         : piece.kind === 'ramp' ? `坡道传递 · ${next.detail}` : `受力倒下 · ${next.detail}`,
+      contact: next.contact,
     }
     events.push(event)
 
     for (const link of document.connections.filter(link => link.from === piece.id && link.enabled)) {
-      queue.push({ pieceId: link.to, time: next.time + link.delay, causeId: event.id, detail: '机关连线' })
+      queue.push({
+        pieceId: link.to, time: next.time + link.delay, causeId: event.id, detail: '机关连线',
+        contact: { sourceId: piece.id, edge: 'link' },
+      })
     }
 
     const available = document.pieces.filter(item => !fallen.has(item.id) && item.id !== piece.id)
@@ -65,6 +89,7 @@ export function propagate(document: DominoDocument) {
       queue.push({
         pieceId: target.id, time: next.time + travel, causeId: event.id,
         detail: piece.kind === 'splitter' ? '分岔臂接触' : piece.kind === 'ramp' ? '坡面末端接触' : '相邻接触',
+        contact: { sourceId: piece.id, edge: physicalEdge(piece, target) },
       })
     }
 
@@ -75,6 +100,7 @@ export function propagate(document: DominoDocument) {
       events.push({
         id: `event-${events.length + 1}`, pieceId: piece.id, time: next.time + 0.05,
         causeId: event.id, kind: 'interrupted', detail: interruptionReason,
+        contact: null,
       })
     }
   }

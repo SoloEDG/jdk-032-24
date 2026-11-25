@@ -44,6 +44,13 @@ export interface DominoDocument {
   startPieceId: string
 }
 
+export type ContactEdge = 'front' | 'back' | 'left' | 'right' | 'ramp' | 'split' | 'link' | 'start'
+
+export interface ContactInfo {
+  sourceId: string | null
+  edge: ContactEdge
+}
+
 export interface SimulationEvent {
   id: string
   pieceId: string
@@ -51,6 +58,7 @@ export interface SimulationEvent {
   causeId: string | null
   kind: 'trigger' | 'fall' | 'mechanism' | 'interrupted'
   detail: string
+  contact: ContactInfo | null
 }
 
 export interface SimulationRun {
@@ -64,4 +72,5 @@ export interface SimulationRun {
   interruptedPieceId: string | null
   interruptionReason: string | null
   duration: number
+  pieceLabels: Record<string, string>
 }

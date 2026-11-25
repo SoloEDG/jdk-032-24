@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "vue-tsc --noEmit",
+    "verify:compare": "esbuild scripts/verify-compare.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/verify-compare.mjs && node node_modules/.cache/verify-compare.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

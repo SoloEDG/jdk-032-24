@@ -6,6 +6,7 @@ import { useMechanisms } from '@/features/mechanisms'
 import { useScene, clampToScene } from '@/features/scene'
 import { useSimulation } from '@/features/simulation'
 import { useReview } from '@/features/replay'
+import { useCompare } from '@/features/compare'
 
 const storageKey = 'chainline-jdk032-project-v1'
 
@@ -41,6 +42,11 @@ export function useWorkspace() {
   const scene = useScene(document, changed)
   const simulation = useSimulation(document)
   const review = useReview(simulation.run)
+  const compare = useCompare()
+
+  watch(simulation.run, run => {
+    if (run) compare.record(run)
+  })
 
   watch(document, next => {
     saveState.value = 'saving'
@@ -93,5 +99,5 @@ export function useWorkspace() {
     window.clearTimeout(saveTimer)
   })
 
-  return { document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review, place, move, focusEvent }
+  return { document, saveState, focusPieceId, layout, mechanisms, scene, simulation, review, compare, place, move, focusEvent }
 }

@@ -27,6 +27,7 @@ export function useSimulation(document: Ref<DominoDocument>) {
         interruptedPieceId: result.interruptedPieceId,
         interruptionReason: result.interruptionReason,
         duration: result.duration,
+        pieceLabels: Object.fromEntries(snapshot.pieces.map(piece => [piece.id, piece.label])),
       }
       if (result.status === 'empty') issue.value = '场景里没有可运行的触发点。'
     } catch {
